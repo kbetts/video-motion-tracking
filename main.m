@@ -1,5 +1,5 @@
 %% Project:			Principal Component Analysis
-%% Author:			Kellen Betts
+%% Author:			Kellen Betts  |  kellen.betts@gmail.com
 %% Date:			120228
 %% Description: 	Paint can experiments; PCA to extract dynamics.
 %%					See accompanying "description" document (PDF, LaTeX, & LyX).

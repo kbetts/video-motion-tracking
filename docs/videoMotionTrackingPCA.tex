@@ -5,8 +5,6 @@
 \usepackage[latin9]{luainputenc}
 \usepackage{geometry}
 \geometry{verbose,tmargin=3cm,bmargin=3cm,lmargin=3cm,rmargin=3cm}
-\usepackage{calc}
-\usepackage{framed}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -32,6 +30,8 @@
 \title{Harmonic Oscillation Motion Tracking}
 
 \author{Kellen Betts}
+
+\date{Updated July 31, 2016}
 \maketitle
 \begin{abstract}
 In this project, four experiments are used to develop an algorithm
@@ -75,7 +75,7 @@ off-center and rotates so as to produce rotation in the $x-y$ plane
 as well as oscillation in the $z$ direction. Thus, there is both
 a pendulum motion and a simple harmonic oscillations.
 \end{enumerate}
-The primary objective in this assignment is to use principal component
+The primary objective in this project is to use principal component
 analysis (PCA), where singular value decomposition (SVD) is a key
 tool, to extract the dynamics of the paint can from the camera recordings
 by reducing redundancy and identifying the directions of maximal variance.
@@ -142,7 +142,7 @@ of the streams. This means the off-diagonals contain information about
 redundancy in the data. Moreover, since dynamical behavior is characterized
 by change and covariance is a measure of change between two data streams,
 then covariance(s) provides a measure of dynamical behavior in a given
-dataset. In this assignment, three cameras are capturing data of the
+dataset. In this project, three cameras are capturing data of the
 same apparatus and so covariance provides a way to identify the dynamics
 of the paint can from the video data.
 
@@ -648,7 +648,7 @@ be the result of errors with the location tracking algorithms. However,
 the paint can apparatus and the videography were not necessarily set
 up for precision measurement and all of the observed results match
 expected behavior with reasonable accuracy indicating the tracking
-algorithm used was sufficient for the purposes of this assignment.
+algorithm used was sufficient for the purposes of this project.
 
 \noindent \begin{center}
 \pagebreak{}
@@ -692,47 +692,17 @@ on a specified tag.
 
 \section*{Appendix B}
 
-\noindent The main script (MATLAB) for this project $\mathtt{main.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/main}\end{framed}
-
-\noindent The MATLAB script $\mathtt{loadMovie.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/loadMovie}\end{framed}
-
-\noindent The MATLAB script $\mathtt{playMovie.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/playMovie}\end{framed}
-
-\noindent The MATLAB script $\mathtt{plotProjections.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/plotProjections}\end{framed}
-
-\noindent The MATLAB script $\mathtt{plotShifted.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/plotShifted}\end{framed}
-
-\noindent The MATLAB script $\mathtt{plotTracking.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/plotTracking}\end{framed}
-
-\noindent The MATLAB script $\mathtt{targetColor.m}$:
-
-\noindent %
-\begin{framed}%
-\input{insert/targetColor}\end{framed}
+See project root for files (MATLAB) .
+\begin{itemize}
+\item Main script for this project = $\mathtt{main.m}$
+\item $\mathtt{loadMovie.m}$
+\item $\mathtt{playMovie.m}$
+\item $\mathtt{plotProjections.m}$
+\item $\mathtt{plotShifted.m}$
+\item $\mathtt{plotTracking.m}$
+\item $\mathtt{targetColor.m}$
+\end{itemize}
+\noindent 
 
 \noindent \begin{center}
 \vspace{0.01\paperheight}
