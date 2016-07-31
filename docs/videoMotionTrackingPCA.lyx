@@ -1,0 +1,3113 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 503
+\begin_document
+\begin_header
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{fancyheadings}
+\pagestyle{fancy}
+\lhead{Principal Component Analysis}
+\chead{}
+\rhead{Kellen Betts}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 3cm
+\topmargin 3cm
+\rightmargin 3cm
+\bottommargin 3cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Harmonic Oscillation Motion Tracking
+\end_layout
+
+\begin_layout Author
+Kellen Betts
+\end_layout
+
+\begin_layout Abstract
+In this project, four experiments are used to develop an algorithm for principal
+ component analysis (PCA) with singular value decomposition (SVD).
+ We explore simple harmonic oscillations, pendulum motion, and the effect
+ of noise.
+ The experimental apparatus is a paint can hanging from a spring.
+ The movement of the paint can is recorded by three cameras.
+ The video files from the cameras are processed to track the location coordinate
+s of the paint can over the course of the experiment.
+ PCA is used to extract the dynamical behavior from the data by reducing
+ redundancy and identifying the directions with maximal variance.
+ In the ideal case where the paint can oscillates in a single direction,
+ the PCA algorithm effectively isolates the behavior with a rank one approximati
+on.
+ If noise is introduced by shaking the cameras, the PCA algorithm is still
+ able to isolate the oscillatory behavior but with less accuracy.
+ Finally, if the paint can oscillates in the vertical direction and swings
+ or rotates in the horizontal direction, the PCA algorithm extracts the
+ multidimensional behavior with expected rank and reasonable accuracy.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+Four experiments are conducted using a paint can hanging from a spring.
+ The movement of the paint can is recorded by three independent cameras
+ (iPhones).
+ The four experiments are:
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Test 1
+\series default
+ (ideal case): A small displacement of the paint can in the 
+\begin_inset Formula $z$
+\end_inset
+
+ direction and the ensuing oscillations.
+ In this case, the entire motion is in the 
+\begin_inset Formula $z$
+\end_inset
+
+ directions with simple harmonic motion being observed.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Test 2
+\series default
+ (noisy case): Repeat the ideal case experiment, but this time introduce
+ camera shake into the video recording.
+ This should make it more difficult to extract the simple harmonic motion.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Test 3
+\series default
+ (horizontal displacement): In this case, the paint can is released off-center
+ so as to produce motion in the 
+\begin_inset Formula $x-y$
+\end_inset
+
+ plane as well as the 
+\begin_inset Formula $z$
+\end_inset
+
+ direction.
+ Thus, there is both a pendulum motion and a simple harmonic oscillations.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Test 4
+\series default
+ (horizontal rotation): In this case, the mass is released off-center and
+ rotates so as to produce rotation in the 
+\begin_inset Formula $x−y$
+\end_inset
+
+ plane as well as oscillation in the 
+\begin_inset Formula $z$
+\end_inset
+
+ direction.
+ Thus, there is both a pendulum motion and a simple harmonic oscillations.
+\end_layout
+
+\begin_layout Standard
+The primary objective in this assignment is to use principal component analysis
+ (PCA), where singular value decomposition (SVD) is a key tool, to extract
+ the dynamics of the paint can from the camera recordings by reducing redundancy
+ and identifying the directions of maximal variance.
+ The location of the paint can is tracked in each video by isolating a target
+ color on the can and logging its coordinates in each frame.
+ The coordinates from each video in a particular experiment are then compiled
+ into a matrix that comprises the data used in the PCA algorithm.
+\end_layout
+
+\begin_layout Section
+Theoretical Background
+\end_layout
+
+\begin_layout Standard
+The governing equation for this system is known,
+\begin_inset Formula 
+\begin{equation}
+\frac{d^{2}f}{dt^{2}}=-\omega^{2}f
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $f\left(t\right)$
+\end_inset
+
+ measures the displacement of the mass in the vertical direction.
+ Equation 1 has the analytical solution,
+\begin_inset Formula 
+\begin{equation}
+f\left(t\right)=A\,\cos\left(\omega t+\omega_{0}\right)
+\end{equation}
+
+\end_inset
+
+The primary objective is to identify the motion of the paint can using PCA
+ by removing redundancy and identifying the maximal variance in the data.
+ In the first experiment there is one degree of freedom with the paint can
+ oscillating in the vertical direction.
+ However, the experimental setup includes three streams of data collecting
+ locations of the paint can in two directions.
+ This means there is a lot of redundancy in the incoming data.
+ 
+\end_layout
+
+\begin_layout Standard
+Variance for a dataset 
+\begin_inset Formula $\vec{a}=\left(a_{1},\,a_{2},\,\ldots,\,a_{n}\right)$
+\end_inset
+
+ is calculated by,
+\begin_inset Formula 
+\begin{equation}
+\sigma_{a}^{2}=\frac{1}{n-1}\vec{a}\vec{a}^{T}
+\end{equation}
+
+\end_inset
+
+and correlation between two datasets 
+\begin_inset Formula $\vec{a}$
+\end_inset
+
+ and 
+\begin_inset Formula $\vec{b}$
+\end_inset
+
+ is calculated by the covariance,
+\begin_inset Formula 
+\begin{equation}
+\sigma_{ab}^{2}=\frac{1}{n-1}\vec{a}\vec{b}^{T}
+\end{equation}
+
+\end_inset
+
+If two vectors are orthogonal then their dot product is zero, and so their
+ covariance is zero.
+ Conversely, if the dot product is large and thus the covariance is large
+ then the two vectors are related.
+ Therefore, covariance provides a measure of statistical dependency between
+ two datasets.
+ 
+\end_layout
+
+\begin_layout Standard
+For a matrix,
+\begin_inset Formula 
+\begin{equation}
+X\;\epsilon\;\mathbb{R}^{m\times n}
+\end{equation}
+
+\end_inset
+
+the covariance matrix is calculated,
+\begin_inset Formula 
+\begin{equation}
+C_{x}=\frac{1}{n-1}XX^{T}
+\end{equation}
+
+\end_inset
+
+which can be written,
+\begin_inset Formula 
+\begin{equation}
+C_{x}=\begin{bmatrix}\sigma_{x,a}^{2} & \sigma_{x,y,a}^{2} & \sigma_{x,x,a,b}^{2} & \cdots\\
+\vdots & \sigma_{y,a}^{2}\\
+ &  & \sigma_{x,b}^{2}\\
+ &  &  & \ddots\\
+ &  &  &  & \sigma_{y,c}^{2}
+\end{bmatrix}\;\epsilon\;\mathbb{R}^{m\times m}
+\end{equation}
+
+\end_inset
+
+The diagonal of the covariance matrix contains the variance of each data
+ stream and the off-diagonals contain the covariance between pairs of the
+ streams.
+ This means the off-diagonals contain information about redundancy in the
+ data.
+ Moreover, since dynamical behavior is characterized by change and covariance
+ is a measure of change between two data streams, then covariance(s) provides
+ a measure of dynamical behavior in a given dataset.
+ In this assignment, three cameras are capturing data of the same apparatus
+ and so covariance provides a way to identify the dynamics of the paint
+ can from the video data.
+\end_layout
+
+\begin_layout Standard
+For the matrix 
+\begin_inset Formula $X$
+\end_inset
+
+ (equation 5), the singular value decomposition (SVD) is defined,
+\begin_inset Formula 
+\begin{equation}
+X=U\Sigma V^{*}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\Sigma$
+\end_inset
+
+ is a diagonal matrix of singular values 
+\begin_inset Formula $\sigma$
+\end_inset
+
+ that correspond to the square root of the eigenvalues 
+\begin_inset Formula $\left(\sigma_{i}=\sqrt{\lambda_{i}}\right)$
+\end_inset
+
+ and are ordered based on size.
+ 
+\begin_inset Formula $U$
+\end_inset
+
+ and 
+\begin_inset Formula $V^{*}$
+\end_inset
+
+ are orthonormal unitary transformations corresponding to the orientation
+ of the incoming data.
+ Using the proper orthogonal modes from the SVD, a low rank approximation
+ can be calculated by the sum,
+\begin_inset Formula 
+\begin{equation}
+X_{N}\approx\sum_{j=1}^{N}\sigma_{j}\vec{u}_{j}\vec{v^{*}}_{j}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $N$
+\end_inset
+
+ is a given rank.
+ The 2-norm error for the approximation is given by,
+\begin_inset Formula 
+\begin{equation}
+\left\Vert X-X_{N}\right\Vert _{2}=\sigma_{n+1}\,.
+\end{equation}
+
+\end_inset
+
+One way to think about SVD is as a least squares fit in higher dimensional
+ space where the elements of 
+\begin_inset Formula $\Sigma$
+\end_inset
+
+ are ordered by their 
+\begin_inset Formula $L^{2}$
+\end_inset
+
+ energy.
+ The energy for a given mode can be calculated,
+\begin_inset Formula 
+\begin{equation}
+\mathrm{energy}_{i}=\frac{\sum_{i=1}^{N}\sigma_{i}}{\sum_{i=1}^{n}\sigma_{i}}\,.
+\end{equation}
+
+\end_inset
+
+Therefore, diagonalization with SVD is a transformation to a new orthonormal
+ basis and provides low rank approximation for a given dataset.
+ To diagonalize the covariance matrix the transformation variable 
+\begin_inset Formula $Y$
+\end_inset
+
+ is defined,
+\begin_inset Formula 
+\begin{equation}
+Y=U^{*}X
+\end{equation}
+
+\end_inset
+
+and the variance in 
+\begin_inset Formula $Y$
+\end_inset
+
+ (see Appendix C for derivation) is calculated,
+\begin_inset Formula 
+\begin{equation}
+C_{Y}=\frac{1}{n-1}\Sigma^{2}\,.
+\end{equation}
+
+\end_inset
+
+In this form the system is said to be written in terms of its principal
+ components with the diagonal matrix 
+\begin_inset Formula $\Sigma^{2}$
+\end_inset
+
+ containing variance measures in 
+\begin_inset Formula $Y$
+\end_inset
+
+ ordered based by size.
+ This means that the dominant 
+\begin_inset Formula $\sigma_{i}^{2}$
+\end_inset
+
+ values reflect directions of maximal variance and allow a low rank approximatio
+n of the spatiotemporal dynamics in the data.
+\end_layout
+
+\begin_layout Section
+Algorithm Implementation and Development
+\end_layout
+
+\begin_layout Subsection
+Position Measurements:
+\end_layout
+
+\begin_layout Standard
+After importing the video data and extracting the data for a given frame,
+ the first task is to identify the 
+\begin_inset Formula $x,y$
+\end_inset
+
+ coordinates of the paint can in the frame.
+ Initially, I attempted to implement a tracking algorithm that got coordinates
+ for the light on the top of the can by brightness.
+ Based on the suggestion from the Catalyst discussion board (megan970),
+ I modified the algorithm to track the yellow color on the paint can.
+ There are five steps in the tracking algorithm that are repeated for each
+ frame in a video:
+\end_layout
+
+\begin_layout Enumerate
+Choosing target color
+\end_layout
+
+\begin_layout Enumerate
+Getting individual frame
+\end_layout
+
+\begin_layout Enumerate
+Building difference image
+\end_layout
+
+\begin_layout Enumerate
+Identifying location of target color
+\end_layout
+
+\begin_layout Standard
+The RGB values for the yellow color on the paint can are manually identified
+ using a separate image editing application similar to Photoshop.
+ Since the color spectrum is different for each of the videos, a subroutine
+ 
+\begin_inset Formula $\mathtt{targetColor.m}$
+\end_inset
+
+ is used to match RGB values to video.
+ A given video is then passed into a loop that will process each frame.
+ Inside the loop, the frame is converted to an image and double precision
+ format.
+ Each color channel is then isolated and the target color value for the
+ channel is subtracted off.
+ The color channels are then combined into a 2-norm difference image where
+ brightness reflects the distance from the target color.
+ As seen in Figure 1, the target color takes a zero intensity value (black)
+ and the rest of the image scales to reflect the difference from the target
+ color.
+ Using this difference image, the paint can location is identified (Figure
+ 2) by finding the coordinates of the minimum value (i.e.
+ the location of the pixel that is closest to the target color).
+ For each camera, the location of the paint can is collected in vectors
+ 
+\begin_inset Formula $\left(\vec{x}_{i}\,,\,\vec{y}_{i}\right)$
+\end_inset
+
+.
+ The data is then arranged into the matrix,
+\begin_inset Formula 
+\begin{equation}
+X=\begin{bmatrix}\vec{x}_{a}\\
+\vec{y}_{a}\\
+\vec{x}_{b}\\
+\vec{y}_{b}\\
+\vec{x}_{c}\\
+\vec{y}_{c}
+\end{bmatrix}\;\epsilon\;\mathbb{R}^{m\times n}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\,i=a,\,b,\,c$
+\end_inset
+
+ are the three cameras, 
+\begin_inset Formula $m$
+\end_inset
+
+ is the number of 
+\begin_inset Quotes eld
+\end_inset
+
+sensors
+\begin_inset Quotes erd
+\end_inset
+
+ tracking the paint can location, and 
+\begin_inset Formula $n$
+\end_inset
+
+ corresponds to the number of measurements in time (meaning the length of
+ the video).
+ In these experiments, the location is tracked in 
+\begin_inset Formula $\left(x,y\right)$
+\end_inset
+
+ for three camera and so the 
+\begin_inset Formula $m=6$
+\end_inset
+
+.
+ Once data for the paint can location is obtained for each of the cameras
+ in a given test scenario, the final task is to synchronize the first frames
+ and trim the data to the length of the shortest video so that covariances
+ between the videos can be calculated.
+\end_layout
+
+\begin_layout Standard
+To speed processing, the use of cropping to the region containing the motion
+ of the paint can is explored (Figure 2).
+ The challenge with using cropping is the effort to manually identifying
+ the region in each video that contains the entire range of motion of the
+ paint can.
+ The observed run time using cropped images is approximately twice as fast
+ due to the data reduction, however, nearly identical results are obtained
+ for the paint can location from both cropped and uncropped videos.
+ Therefore, to reduce the upfront manual workload and prevent potential
+ error from cropping out necessary information, all further analyses use
+ uncropped videos.
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset VSpace 7pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename plots/test2_colorShift_noCrop.png
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 1.
+
+\series default
+ For a specified target color (in this case the yellow on the paint can),
+ a difference image is constructed using the 2-norm of the difference from
+ the target color.
+ This creates an image (right) where the target color takes the minimum
+ value and the rests of the image is scaled by difference from the target
+ color.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test1_colorShift_crop.png
+	width 65col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 2.
+
+\series default
+ The paint can location (right) is identified by finding the minimum value
+ in the difference image (center) where the scale is based on the difference
+ from the target color (yellow on the can).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset VSpace 2pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Principal Component Analysis:
+\end_layout
+
+\begin_layout Standard
+There are three steps in the PCA algorithm:
+\end_layout
+
+\begin_layout Enumerate
+Subtracting the mean from the data
+\end_layout
+
+\begin_layout Enumerate
+SVD of the data
+\end_layout
+
+\begin_layout Enumerate
+Output/visualization of results
+\end_layout
+
+\begin_layout Standard
+Implementation is greatly simplified because calculation of the mean and
+ the SVD operation are performed using built in MATLAB functions (see Appendix
+ A).
+ The outputs from the 
+\begin_inset Formula $\mathtt{svd()}$
+\end_inset
+
+ function are the 
+\begin_inset Formula $U,\,\Sigma,\,V^{*}$
+\end_inset
+
+ matrices.
+ The principal component projections 
+\begin_inset Formula $\left(Y=U^{*}X\right)$
+\end_inset
+
+, diagonal variances 
+\begin_inset Formula $\left(\sigma_{i}^{2}=\lambda_{i}\right)$
+\end_inset
+
+, and proper orthogonal modes (equation 9) are plotted in the subroutine
+ 
+\begin_inset Formula $\mathtt{plotProjections.m}$
+\end_inset
+
+.
+ The energy contained at a given mode is calculated using equation 11.
+\end_layout
+
+\begin_layout Section
+Computational Results
+\end_layout
+
+\begin_layout Subsection
+Test 1
+\end_layout
+
+\begin_layout Standard
+In Test 1, the paint can is set to oscillate in a purely vertical direction
+ and so we should expect maximal variance in one component.
+ Plotting the raw location tracking data (Figure 3) clearly shows consistent
+ oscillation in the vertical direction and minimal movement in the horizontal
+ for all three cameras.
+ Energies of the diagonal variances from the PCA were,
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="7">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $\sigma_{i}^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+energy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9499
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9744
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9874
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9959
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9986
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.0000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+indicating that ~95% of the variance are captured in the first principal
+ component.
+ Figure 4 shows that the variance in the first component is almost 
+\begin_inset Formula $10^{2}$
+\end_inset
+
+ greater than the others.
+ Plotting of the principal component projections (Figure 5) and the proper
+ orthogonal modes (Figure 6) confirm that the first component or the rank
+ one approximation captures the one dimensional oscillation in this test
+ case.
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test1_tracking.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 3.
+
+\series default
+ For Test 1, the raw location tracking data for each camera clearly shows
+ oscillation in the vertical (right) direction and minimal movement in the
+ horizontal (left).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 8pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test1_variance_before.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 4.
+
+\series default
+ For Test 1, the diagonal variances 
+\begin_inset Formula $\left(\sigma_{i}^{2}=\lambda_{i}\right)$
+\end_inset
+
+ show that the first component captures most of the variance with almost
+ 
+\begin_inset Formula $10^{2}$
+\end_inset
+
+ more variance than the others.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test1_princComp.eps
+	width 95col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 5.
+
+\series default
+ For Test 1, the principal components 
+\begin_inset Formula $\left(Y\right)$
+\end_inset
+
+ shows that the first component (top left) clearly captures the oscillatory
+ behavior of the can.
+\end_layout
+
+\end_inset
+
+
+\series default
+
+\begin_inset VSpace 0.5pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test1_modes_before.eps
+	width 85col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 6.
+
+\series default
+ For Test 1, the proper orthogonal modes shows that a rank one approximation
+ (first row) captures that vertical (right) oscillatory behavior and is
+ a close match to the full rank (bottom row) data.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Test 2
+\end_layout
+
+\begin_layout Standard
+In Test 2, the paint can is set to oscillate in a purely vertical direction
+ just as in Test 1 and so we should expect maximal variance in one component.
+ However, the camera operators intentionally shook the camera while recording
+ introducing noise in the data.
+ The intention of this scenario is to explore how noise affects the PCA
+ algorithm.
+ Plotting the raw location tracking data (Figure 7) shows oscillation in
+ the vertical direction that is consistent but much more erratic than Test
+ 1.
+ The horizontal direction shows some movement but no consistent oscillatory
+ behavior.
+ Therefore, the noise from the camera shake diminishes the quality of the
+ data in both the horizontal and vertical directions.
+ Energies of the diagonal variances from the PCA were,
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="7">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $\sigma_{i}^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+energy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.6527
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.8079
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.8985
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9468
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9796
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.0000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+indicating that only ~65% of the variance is captured in the first principal
+ component compared to ~95% for Test 1.
+ Figure 8 shows that the variance in the first component is dominant but
+ has less than 
+\begin_inset Formula $10^{1}$
+\end_inset
+
+ more variance than the others.
+ Plotting the principal component projections (Figure 9) shows that both
+ the first and second components show oscillatory behavior.
+ The proper orthogonal modes (Figure 10) confirm that a rank one approximation
+ does capture the vertical oscillation, but the rank four approximation
+ (corresponding to ~95% energy) is a better match to the full rank (six)
+ data.
+ These results indicate that the noise from the camera shake diminishes
+ performance.
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 5pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test2_tracking.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 7.
+
+\series default
+ For Test 2, the raw location tracking data for each camera clearly shows
+ oscillation in the vertical (right) direction but the noise-inducing camera
+ shake diminishes its consistency and introduces movement in the horizontal
+ direction (left).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 3pheight%
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test2_variance.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 8.
+
+\series default
+ For Test 2, the diagonal variances 
+\begin_inset Formula $\left(\sigma_{i}^{2}=\lambda_{i}\right)$
+\end_inset
+
+ show that the first component is dominant but less than 
+\begin_inset Formula $10^{1}$
+\end_inset
+
+ more than the others.
+ 
+\end_layout
+
+\end_inset
+
+
+\series default
+
+\begin_inset VSpace 10pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test2_princComp.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 9.
+
+\series default
+ For Test 2, the principal component projections 
+\begin_inset Formula $\left(Y\right)$
+\end_inset
+
+ shows that both the first and second components show oscillatory behavior.
+\end_layout
+
+\end_inset
+
+
+\series default
+
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test2_modes.eps
+	width 85col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 10.
+
+\series default
+ For Test 2, the proper orthogonal modes show that a rank one approximation
+ does capture vertical oscillation, but the rank four approximation (forth
+ from top) is a better match to the full rank (bottom row).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 2pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Test 3
+\end_layout
+
+\begin_layout Standard
+In Test 3, the paint can is set to oscillate in the vertical direction just
+ as in Test 1-2 but is also set to oscillate in the horizontal direction
+ and so we should expect maximal variance for two components.
+ Plotting the raw location tracking data (Figure 11) shows oscillation in
+ both the vertical and horizontal directions for all three cameras.
+ 
+\end_layout
+
+\begin_layout Standard
+Energies of the diagonal variances from the PCA were,
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="7">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $\sigma_{i}^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+energy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.4756
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.7226
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9009
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9580
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9957
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.0000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+indicating that ~48% of the variance is captured in the first principal
+ component, ~72% in the second, and that it takes four modes to reach 95%.
+ Figure 12 shows that the variance in the first component is dominant but
+ that the trend is approximately linear for the first five modes.
+ Plotting the principal component projections (Figure 13) shows that the
+ first three components contain oscillatory behavior.
+ The proper orthogonal modes (Figure 14) show that a rank two approximation
+ captures the vertical and horizontal oscillation, but the rank four approximati
+on (corresponding to ~95% energy) is a better match to the full rank (six)
+ data.
+ These results indicate that the the PCA algorithm effectively captures
+ the horizontal and vertical oscillation with two components, but better
+ accuracy is achieved with higher rank data.
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test3_tracking.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 11.
+
+\series default
+ For Test 3, the raw location tracking data clearly shows oscillation in
+ both the vertical (right) and horizontal (left) directions for all three
+ cameras.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 6pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test3_variance.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 12.
+
+\series default
+ For Test 3, the diagonal variances 
+\begin_inset Formula $\left(\sigma_{i}^{2}=\lambda_{i}\right)$
+\end_inset
+
+ show that the variance in the first component is dominant but that the
+ trend is approximately linear for the first five modes.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test3_princComp.eps
+	width 78col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 13.
+
+\series default
+ For Test 3, the principal component projections 
+\begin_inset Formula $\left(Y\right)$
+\end_inset
+
+ shows that the first three components contain oscillatory behavior.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test3_modes.eps
+	width 75col%
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 14.
+
+\series default
+ For Test 3, the proper orthogonal modes show that rank two (second from
+ top) captures the vertical and horizontal oscillation, but that rank four
+ (fourth from top) is a better match to the full rank (bottom row).
+\end_layout
+
+\end_inset
+
+
+\series default
+
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Test 4
+\end_layout
+
+\begin_layout Standard
+In Test 4, the paint can is set to oscillate in the vertical and horizontal
+ directions just as in Test 3 but is the horizontal direction is set to
+ rotation and so we should expect maximal variance for two or more components.
+ Plotting the raw location tracking data (Figure 15) shows oscillation in
+ both the vertical and horizontal directions for all three cameras.
+ However, the oscillation in this erratic and at certain time points shows
+ that the location tracking algorithm may have made substantial errors.
+\end_layout
+
+\begin_layout Standard
+Energies of the diagonal variances from the PCA were,
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="7">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula $\sigma_{i}^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+energy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.5258
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.8694
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9297
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9668
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.9892
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.0000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+indicating that ~52% of the variance is captured in the first principal
+ component, ~87% in the second, and that it takes four modes to reach 95%.
+ Figure 16 shows that the variance in the first two components is dominant
+ but that the trend is still approximately linear for the six modes.
+ Plotting the principal component projections (Figure 17) shows that the
+ first four components contain clear oscillatory behavior.
+ The proper orthogonal modes (Figure 18) show the rank two approximation
+ captures the horizontal and vertical behavior and is a decent match to
+ the full rank (six) data.
+ These results indicate that the the PCA algorithm effectively captures
+ the horizontal and vertical oscillation with two components, but better
+ accuracy is achieved with nearly full rank data.
+\begin_inset VSpace 7pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test4_tracking.eps
+	width 100col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 15.
+
+\series default
+ For Test 4, the raw location tracking data shows clear oscillation in the
+ vertical (right) direction and erratic oscillation in the horizontal (left)
+ for all three cameras.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test4_variance.eps
+	width 95col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 16.
+
+\series default
+ For Test 4, the diagonal variances 
+\begin_inset Formula $\left(\sigma_{i}^{2}=\lambda_{i}\right)$
+\end_inset
+
+ show that the variance in the first two components are dominant but that
+ the trend is approximately linear for the six modes.
+ 
+\end_layout
+
+\end_inset
+
+
+\series default
+
+\begin_inset VSpace 3pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Graphics
+	filename plots/test3_princComp.eps
+	width 95col%
+
+\end_inset
+
+
+\series bold
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 17.
+
+\series default
+ For Test 4, the principal component projections 
+\begin_inset Formula $\left(Y\right)$
+\end_inset
+
+ shows that the first four or five components contain oscillatory behavior.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\begin_inset Graphics
+	filename plots/test4_modes.eps
+	width 85col%
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\series bold
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "l"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "75col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+Figure 18.
+
+\series default
+ For Test 4, the proper orthogonal modes show that a rank two approximation
+ (second from top) captures the vertical and horizontal oscillation and
+ is a decent match to the full rank (bottom row) data.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 5pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Summary and Conclusions
+\end_layout
+
+\begin_layout Standard
+Ultimately, this project shows that principal component analysis (PCA) can
+ be used to reduce redundancy and find directions of maximal variance in
+ complex data.
+ This allows low rank approximations of multidimensional dynamical behavior.
+ One of the primary obstacles encountered was the measurement of the paint
+ can location in the video frames.
+ This algorithm adopts a suggestion from a classmate to track the yellow
+ color on the paint can.
+ As with any experiment, experimental precision is critical to minimizing
+ error attributable to the procedure.
+ I suspect some of the erratic behavior, especially in Test 4 with the rotation,
+ may be the result of errors with the location tracking algorithms.
+ However, the paint can apparatus and the videography were not necessarily
+ set up for precision measurement and all of the observed results match
+ expected behavior with reasonable accuracy indicating the tracking algorithm
+ used was sufficient for the purposes of this assignment.
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Appendix A
+\end_layout
+
+\begin_layout Description
+diag Used to extract the diagonals from a matrix.
+\end_layout
+
+\begin_layout Description
+double Used to convert 8-bit integer image data to double precision format.
+\end_layout
+
+\begin_layout Description
+frame2im Used to covert a movie frame to an image.
+\end_layout
+
+\begin_layout Description
+imshow Used to plot image data.
+\end_layout
+
+\begin_layout Description
+load Loads data from an external file.
+\end_layout
+
+\begin_layout Description
+ind2sub Used to convert a linear index (in this case the minimum value in
+ the difference image) into corresponding 2D subscripts.
+\end_layout
+
+\begin_layout Description
+linspace Used to build a linear vector with 
+\begin_inset Formula $n+1$
+\end_inset
+
+ points for the spatial domain.
+ The vector is then trimmed to 
+\begin_inset Formula $n$
+\end_inset
+
+ points due to the periodic boundaries.
+\end_layout
+
+\begin_layout Description
+mean Used to calculate the mean for each row of the location coordinate
+ data.
+ 
+\end_layout
+
+\begin_layout Description
+min Used to find the minimum value in a given array.
+\end_layout
+
+\begin_layout Description
+num2str Used to convert a number to a string.
+\end_layout
+
+\begin_layout Description
+plot Used to plot the various parameters agains time or frequency.
+\end_layout
+
+\begin_layout Description
+repmat Used to replicate and tile an array for the means.
+\end_layout
+
+\begin_layout Description
+reshape Reshapes vector or matrix for given dimensions.
+\end_layout
+
+\begin_layout Description
+semilogy Used to make a plot with the 
+\begin_inset Formula $y$
+\end_inset
+
+-axis on a logarithmic scale.
+\end_layout
+
+\begin_layout Description
+size Used to get the number of rows and columns for a given matrix.
+\end_layout
+
+\begin_layout Description
+strcat Used to concatenate a string.
+\end_layout
+
+\begin_layout Description
+subplot Used to produce plot arrays.
+\end_layout
+
+\begin_layout Description
+sum Used to calculate sums.
+\end_layout
+
+\begin_layout Description
+switch Conditional structure used to vary code execution based on a specified
+ tag.
+\end_layout
+
+\begin_layout Description
+tic/toc Used to time the operations.
+\end_layout
+
+\begin_layout Description
+uint8 Used to convert data to 8-bit integer format.
+\end_layout
+
+\begin_layout Description
+zeros Used to build vectors and matrices filled with 
+\begin_inset Quotes eld
+\end_inset
+
+0
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Appendix B
+\end_layout
+
+\begin_layout Standard
+\noindent
+The main script (MATLAB) for this project 
+\begin_inset Formula $\mathtt{main.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/main}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{loadMovie.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/loadMovie}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{playMovie.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/playMovie}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{plotProjections.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/plotProjections}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{plotShifted.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/plotShifted}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{plotTracking.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/plotTracking}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The MATLAB script 
+\begin_inset Formula $\mathtt{targetColor.m}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Box Framed
+position "t"
+hor_pos "c"
+has_inner_box 0
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+input{insert/targetColor}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Separator parbreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset VSpace 1pheight%
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Appendix C
+\end_layout
+
+\begin_layout Subsubsection*
+Diagonalization of the Covariance Matrix:
+\end_layout
+
+\begin_layout Standard
+The SVD for the matrix of the paint can locations is defined,
+\begin_inset Formula 
+\[
+X=U\Sigma V^{*}
+\]
+
+\end_inset
+
+with the transformation variable defined,
+\begin_inset Formula 
+\[
+Y=U^{*}X\,.
+\]
+
+\end_inset
+
+The covariance matrix of 
+\begin_inset Formula $Y$
+\end_inset
+
+ is defined,
+\begin_inset Formula 
+\[
+C_{Y}=\frac{1}{n-1}YY^{T}=\frac{1}{n-1}\left(U^{*}X\right)\left(U^{*}X\right)^{T}=\frac{1}{n-1}U^{*}XX^{T}U
+\]
+
+\end_inset
+
+and solving the eigenvalue problem,
+\begin_inset Formula 
+\[
+XX^{T}U=U\Sigma^{2}
+\]
+
+\end_inset
+
+gives,
+\begin_inset Formula 
+\[
+C_{Y}=\frac{1}{n-1}U^{*}U\Sigma^{2}=\frac{1}{n-1}\Sigma^{2}\,.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
