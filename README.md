@@ -1,5 +1,5 @@
 # videoMotionTrackingPCA
-Harmonic oscillation motion tracking in video using principal component analysis.
+Harmonic oscillation motion tracking in video data using principal component analysis.
 
 See the documentation (./docs/) for more details.
 
