@@ -1,6 +1,6 @@
 function [mov numFrames] = loadMovie(test,camera,cropCheck,cropLim,dx,dy)
 	
-	pathName = '/Volumes/Storage HD/Courses/AMath 582/Homework 4/';
+	pathName = './data/';
 	varNameBase = 'vidFrames';
 
 	fileName = strcat(pathName,'cam',num2str(camera),'_',num2str(test),'.mat');
