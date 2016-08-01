@@ -1,13 +1,12 @@
-%% Project:			Principal Component Analysis
+%% Project:			videoMotionTrackingPCA
 %% Author:			Kellen Betts  |  kellen.betts@gmail.com
-%% Date:			120228
-%% Description: 	Paint can experiments; PCA to extract dynamics.
-%%					See accompanying "description" document (PDF, LaTeX, & LyX).
+%% Description: 	See accompanying docs
 
 
 %% MATLAB CODE %%
 
 clear all; close all; tic
+
 
 %%===========================================================     initialization
 
@@ -23,8 +22,8 @@ color = targetColor(test);
 numFrames = zeros(numCameras,1);
 X = zeros(numCameras*2,500);
 
-%%==============================================================     coordinates
 
+%%==============================================================     coordinates
 
 fig = 0;
 for camera=1:numCameras
@@ -72,6 +71,7 @@ X(4,1:end-(lag-1)) = X(4,lag:end);
 n = min(numFrames);
 X = X(:,1:n);
 
+
 %%======================================================================     PCA
 
 [m,n] = size(X);
@@ -92,6 +92,7 @@ for j=1:m
 end
 energy
 
+
 %%=================================================================     plotting
 
 plotTracking(X,3);
@@ -106,6 +107,7 @@ plotProjections(Y,U,S,V,'princComp',3,5);
 plotProjections(Y,U,S,V,'array',6,6);
 
 %plotProjections(Y,U,S,V,'best',rankExpt,7);
+
 
 %%======================================================================     end
 toc
